@@ -1413,7 +1413,11 @@ final class MeetingProcessingPipeline: MeetingProcessingControlling {
         // The selection is read exactly once, here, and every later decision in this attempt uses
         // the local copy. Re-reading the preference after an await could split one attempt across
         // two backends — planning under one, failing the legacy callback against another.
-        let backendID = self.backendIDProvider(session.languageCode)
+        // FORK(meeting-language): an automatic session may not be English, so it must not take the
+        // English-only rollback path.
+        let backendID = self.backendIDProvider(
+            session.detectsLanguage == true ? MeetingLanguageChoice.autoCode : session.languageCode
+        )
         DebugLogger.shared.info(
             "Meeting final processing selected backend=\(backendID.rawValue)",
             source: "MeetingProcessingPipeline"
@@ -1430,6 +1434,13 @@ final class MeetingProcessingPipeline: MeetingProcessingControlling {
             session: session,
             sessionDirectory: sessionDirectory,
             configuration: MeetingFinalProcessingConfiguration(
+                // FORK(meeting-language): automatic sessions always use a multilingual model, even
+                // when the dictation model is English-only.
+                asrModel: session.detectsLanguage == true
+                    ? MeetingProviderOptions.preferredMultilingualModel(
+                        selected: backendID == .parakeetNemotron ? self.preferredASRModelProvider() : nil
+                    ).rawValue
+                    : nil,
                 preferredASRModel: backendID == .parakeetNemotron ? self.preferredASRModelProvider() : nil,
                 languageCode: session.languageCode
             )

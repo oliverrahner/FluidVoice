@@ -97,7 +97,7 @@ struct MeetingRecordingSettingsSheet: View {
     }
 
     private var canSave: Bool {
-        guard VoiceEngineLanguageCatalog.parakeetV3LanguageIDs.contains(self.draft.languageCode) else { return false }
+        guard MeetingLanguageChoice.isValidChoice(self.draft.languageCode) else { return false }
         guard self.microphones.contains(where: { $0.id == self.draft.selectedMicrophoneID }) else { return false }
         return self.draft.mode == .inRoom
             || self.draft.usesAutomaticApplication
@@ -302,17 +302,20 @@ struct MeetingRecordingSettingsSheet: View {
             FluidManagementGroup(title: "Transcript language") {
                 MeetingAdaptiveSetupRow(
                     title: "Language",
-                    detail: "Final transcripts support 25 languages. Live captions are English-only."
+                    detail: "Auto-detect names the meeting language from the finished transcript. Final transcripts support 25 languages."
                 ) {
                     Menu {
                         Picker("Meeting language", selection: self.$draft.languageCode) {
+                            // FORK(meeting-language): automatic detection is the default choice.
+                            Text(MeetingLanguageChoice.displayName(for: MeetingLanguageChoice.autoCode)).tag(MeetingLanguageChoice.autoCode)
+                            Divider()
                             ForEach(VoiceEngineLanguageCatalog.allLanguages(availableModels: [.parakeetTDT])) { language in
                                 Text(language.displayName).tag(language.id)
                             }
                         }
                         .pickerStyle(.inline)
                     } label: {
-                        Text(VoiceEngineLanguageCatalog.language(id: self.draft.languageCode, availableModels: [.parakeetTDT])?.displayName ?? "Choose language…")
+                        Text(MeetingLanguageChoice.isValidChoice(self.draft.languageCode) ? MeetingLanguageChoice.displayName(for: self.draft.languageCode) : "Choose language…")
                     }
                     .fluidDropdownStyle(fillsWidth: true)
                     .accessibilityLabel("Meeting transcript language")

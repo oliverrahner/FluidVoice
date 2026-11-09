@@ -64,7 +64,7 @@ struct MeetingTranscriptionSetupDraft: Equatable {
     init(defaults: MeetingRecordingDefaults, autoDetectEnabled: Bool, browserDetectionEnabled: Bool) {
         self.autoDetectEnabled = autoDetectEnabled
         self.browserDetectionEnabled = browserDetectionEnabled
-        self.languageCode = defaults.languageCode ?? "en"
+        self.languageCode = MeetingLanguageChoice.storedChoice(defaults.languageCode)
         self.mode = defaults.mode
         self.title = Self.defaultTitle(mode: defaults.mode, applicationDisplayName: nil)
         self.selectedApplicationID = nil
@@ -840,7 +840,9 @@ struct MeetingTranscriptionView: View {
         return MeetingCaptureConfiguration(
             mode: self.setupDraft.mode,
             title: title,
-            languageCode: self.setupDraft.languageCode,
+            // FORK(meeting-language): read the saved choice, which the menu bar and record prompt
+            // can change while this view keeps an older draft.
+            languageCode: MeetingLanguageChoice.storedChoice(SettingsStore.shared.meetingRecordingDefaults.languageCode),
             platform: application.map {
                 MeetingPlatformProfile(identifier: $0.bundleIdentifier, displayName: $0.displayName)
             },
@@ -1022,7 +1024,8 @@ struct MeetingTranscriptionView: View {
         return MeetingCaptureConfiguration(
             mode: session.mode,
             title: session.defaultTitleBase ?? session.title,
-            languageCode: session.languageCode,
+            // FORK(meeting-language): an automatic meeting is recorded again with detection.
+            languageCode: session.detectsLanguage == true ? MeetingLanguageChoice.autoCode : session.languageCode,
             platform: session.platform,
             application: application,
             microphone: microphone,
@@ -1265,6 +1268,8 @@ struct MeetingTranscriptionView: View {
         self.meetingSettingsInitialSection = section
         self.setupDraft.autoDetectEnabled = SettingsStore.shared.meetingAutoDetectEnabled
         self.setupDraft.browserDetectionEnabled = SettingsStore.shared.meetingAutoDetectBrowserEnabled
+        // FORK(meeting-language): the language may have changed from the menu bar or record prompt.
+        self.setupDraft.languageCode = MeetingLanguageChoice.storedChoice(SettingsStore.shared.meetingRecordingDefaults.languageCode)
         self.setupDraft.applicationSelectionWasEdited = false
         self.setupDraftBeforeEditing = self.setupDraft
         self.draftMeetingAudioRetentionPolicy = SettingsStore.shared.meetingAudioRetentionPolicy

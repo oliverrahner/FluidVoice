@@ -332,7 +332,7 @@ final class MeetingSessionCoordinator: ObservableObject {
         return MeetingCaptureConfiguration(
             mode: mode,
             title: title,
-            languageCode: SettingsStore.shared.meetingRecordingDefaults.languageCode ?? "en",
+            languageCode: MeetingLanguageChoice.storedChoice(SettingsStore.shared.meetingRecordingDefaults.languageCode),
             application: application,
             microphone: microphone,
             timestampDefaultTitle: true
@@ -1761,6 +1761,16 @@ final class MeetingSessionCoordinator: ObservableObject {
             completedAttempt.retainedTranscriptLanguageCode = nil
             session.speakers = result.speakers
             session.transcriptSegments = result.segments
+            // FORK(meeting-language): an explicit language choice ends detection; otherwise an
+            // automatic session takes the dominant language of its transcript.
+            if requestedLanguageCode != nil {
+                session.detectsLanguage = nil
+            } else if session.detectsLanguage == true,
+                      let detected = MeetingLanguageChoice.detectLanguage(in: result.segments.map(\.text))
+            {
+                session.languageCode = detected
+                completedAttempt.languageCode = detected
+            }
             session.postProcessing = result.postProcessing
             session.transcriptCoverageGaps = result.coverageGaps.isEmpty ? nil : result.coverageGaps
             // Canonical attempts carry a sidecar that was already written and read-back verified

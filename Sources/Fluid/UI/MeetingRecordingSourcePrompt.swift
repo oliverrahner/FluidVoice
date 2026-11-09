@@ -77,7 +77,7 @@ nonisolated struct MeetingRecordingSourceSnapshot: Sendable {
         return MeetingCaptureConfiguration(
             mode: self.defaults.mode,
             title: MeetingTranscriptionSetupDraft.defaultTitle(mode: self.defaults.mode, applicationDisplayName: application?.displayName),
-            languageCode: self.defaults.languageCode ?? "en",
+            languageCode: MeetingLanguageChoice.storedChoice(self.defaults.languageCode),
             platform: application.map { MeetingPlatformProfile(identifier: $0.bundleIdentifier, displayName: $0.displayName) },
             application: application,
             microphone: microphone,
@@ -198,6 +198,13 @@ final class MeetingRecordingSourcePromptController: ObservableObject {
         self.snapshot?.selectedMicrophoneID = id
     }
 
+    /// FORK(meeting-language): the choice is remembered for the next meeting as well.
+    func selectLanguage(_ code: String) {
+        guard !self.isStarting, self.snapshot != nil, MeetingLanguageChoice.isValidChoice(code) else { return }
+        self.snapshot?.defaults.languageCode = code
+        MeetingLanguageChoice.save(code)
+    }
+
     func refresh() {
         guard !self.isStarting, !self.isLoading else { return }
         let selection = self.snapshot ?? self.refreshSelection
@@ -304,7 +311,7 @@ final class MeetingRecordingSourcePromptController: ObservableObject {
                 MeetingRecordingSourcePromptContent(controller: self)
             })
             self.panel = MeetingFloatingPanelFactory.make(
-                size: NSSize(width: 392, height: 300), resizable: false, content: content, allowsKeyboardFocus: true
+                size: NSSize(width: 392, height: 340), resizable: false, content: content, allowsKeyboardFocus: true
             )
         }
         guard let panel = self.panel, let screen = OverlayScreenResolver.screenForCurrentPointer() ?? NSScreen.main else { return false }
@@ -329,6 +336,7 @@ struct MeetingRecordingSourcePromptContent: View {
             } else if let snapshot = self.controller.snapshot {
                 self.sourceSelector(snapshot)
                 self.microphoneSelector(snapshot)
+                self.languageSelector(snapshot)
             }
             if let error = self.controller.errorMessage {
                 Text(error).font(self.theme.typography.caption).foregroundStyle(self.theme.palette.warning)
@@ -353,7 +361,7 @@ struct MeetingRecordingSourcePromptContent: View {
                 .font(self.theme.typography.caption).foregroundStyle(self.theme.palette.secondaryText)
         }
         .padding(16)
-        .frame(width: 392, height: 300, alignment: .topLeading)
+        .frame(width: 392, height: 340, alignment: .topLeading)
         .background(RoundedRectangle(cornerRadius: 16).fill(self.theme.palette.contentBackground))
         .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(self.theme.palette.separator.opacity(0.55), lineWidth: 1))
         .accessibilityElement(children: .contain)
@@ -423,6 +431,27 @@ struct MeetingRecordingSourcePromptContent: View {
                 Text(name)
             }
         }
+    }
+
+    // FORK(meeting-language): one-click language choice right where the recording starts.
+    private func languageSelector(_ snapshot: MeetingRecordingSourceSnapshot) -> some View {
+        let current = MeetingLanguageChoice.storedChoice(snapshot.defaults.languageCode)
+        let codes = MeetingLanguageChoice.quickCodes.contains(current)
+            ? MeetingLanguageChoice.quickCodes
+            : MeetingLanguageChoice.quickCodes + [current]
+        return Picker("Language", selection: Binding(
+            get: { current },
+            set: { self.controller.selectLanguage($0) }
+        )) {
+            ForEach(codes, id: \.self) { code in
+                Text(MeetingLanguageChoice.shortName(for: code)).tag(code)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .accessibilityLabel("Meeting language")
+        .accessibilityValue(MeetingLanguageChoice.displayName(for: current))
+        .disabled(self.controller.isStarting)
     }
 
     private func microphoneSelector(_ snapshot: MeetingRecordingSourceSnapshot) -> some View {

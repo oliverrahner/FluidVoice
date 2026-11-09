@@ -138,6 +138,14 @@ nonisolated struct MeetingProviderOptions: Equatable, Sendable {
         return languageCode == "en" ? .parakeetTDTv2 : .parakeetTDT
     }
 
+    /// FORK(meeting-language): the model for a meeting whose language is detected afterwards.
+    static func preferredMultilingualModel(selected: SettingsStore.SpeechModel?) -> SettingsStore.SpeechModel {
+        if let selected, self.supportedModels.contains(selected),
+           ParakeetSpeechModelCatalog.descriptor(forModelID: selected.rawValue)?.isEnglishOnly == false
+        { return selected }
+        return .parakeetTDT
+    }
+
     let model: SettingsStore.SpeechModel
     let vocabularyBoostingEnabled: Bool
     let pronunciationMatchingEnabled: Bool

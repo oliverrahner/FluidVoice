@@ -974,6 +974,7 @@ final class MenuBarManager: NSObject, ObservableObject, NSMenuDelegate {
         startMeetingItem.target = self
         menu.addItem(startMeetingItem)
         self.startMeetingRecordingMenuItem = startMeetingItem
+        menu.addItem(self.makeMeetingLanguageMenuItem()) // FORK(meeting-language)
 
         let stopMeetingItem = NSMenuItem(
             title: "Stop Meeting Recording",
@@ -1205,6 +1206,7 @@ final class MenuBarManager: NSObject, ObservableObject, NSMenuDelegate {
             AnalyticsService.shared.recordAppActivity()
             self.updateMenuItemsText()
             self.refreshMicrophoneMenu()
+            self.refreshMeetingLanguageMenu(in: menu) // FORK(meeting-language)
         }
     }
 

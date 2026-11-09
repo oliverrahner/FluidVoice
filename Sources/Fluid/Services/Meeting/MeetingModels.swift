@@ -274,6 +274,9 @@ nonisolated struct MeetingCaptureConfiguration: Codable, Equatable, Sendable {
     var microphone: MeetingMicrophoneIdentity
     var chunkDuration: TimeInterval
     var timestampDefaultTitle: Bool? = nil
+    /// FORK(meeting-language): true when the user chose automatic language detection. The
+    /// `languageCode` then holds a provisional code until the transcript is analysed.
+    var detectsLanguage: Bool? = nil
 
     init(
         mode: MeetingCaptureMode,
@@ -287,7 +290,14 @@ nonisolated struct MeetingCaptureConfiguration: Codable, Equatable, Sendable {
     ) {
         self.mode = mode
         self.title = title
-        self.languageCode = languageCode
+        // FORK(meeting-language): resolve "auto" here so every caller and every guard downstream
+        // only ever sees a concrete language code.
+        if MeetingLanguageChoice.isAuto(languageCode) {
+            self.languageCode = MeetingLanguageChoice.provisionalCode
+            self.detectsLanguage = true
+        } else {
+            self.languageCode = languageCode
+        }
         self.platform = platform
         self.application = application
         self.microphone = microphone
@@ -946,6 +956,9 @@ nonisolated struct MeetingSession: Codable, Identifiable, Equatable, Sendable {
     /// Set when the user dismisses a recoverable session so it is not re-offered on next launch.
     /// Optional so pre-M2 persisted manifests still decode.
     var recoveryResolvedAt: Date? = nil
+    /// FORK(meeting-language): the language is detected from the transcript after processing.
+    /// Cleared once the user explicitly transcribes the meeting in a chosen language.
+    var detectsLanguage: Bool? = nil
 
     init(
         id: MeetingSessionID = UUID(),
@@ -960,6 +973,7 @@ nonisolated struct MeetingSession: Codable, Identifiable, Equatable, Sendable {
             "\($0) · \(startedAt.formatted(.dateTime.year().month(.abbreviated).day().hour().minute()))"
         } ?? configuration.title
         self.languageCode = configuration.languageCode
+        self.detectsLanguage = configuration.detectsLanguage
         self.mode = configuration.mode
         self.platform = configuration.platform
         self.capturedApplication = configuration.application
