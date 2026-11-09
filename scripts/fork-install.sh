@@ -42,7 +42,7 @@ if [ -d "${framework}/Versions/A" ]; then
     codesign --force --sign "${identity_hash}" --options runtime --timestamp=none \
         --preserve-metadata=identifier,requirements,flags "${framework}"
 fi
-entitlements="$(mktemp -t fluidvoice-entitlements)"
+entitlements="$(mktemp "${TMPDIR:-/tmp}/fluidvoice-entitlements.XXXXXX")"
 codesign --display --entitlements :- "${APP_PATH}" > "${entitlements}" 2>/dev/null || true
 if [ -s "${entitlements}" ]; then
     codesign --force --sign "${identity_hash}" --options runtime --timestamp=none \
