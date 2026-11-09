@@ -97,3 +97,32 @@ English and could route it to the English-only Parakeet v2 model.
   `Sources/Fluid/UI/MeetingRecordingSourcePrompt.swift`,
   `Sources/Fluid/UI/MeetingTranscriptionView.swift`: default `"en"` → saved choice / Auto
 - `Sources/Fluid/UI/MeetingRecordingSettingsSheet.swift`: "Auto-detect" picker entry, save guard
+
+## Feature: Live captions in German and Auto (`live-captions-multilingual`)
+
+**Why:** upstream live captions only run the English-only Parakeet realtime EOU model, and are
+switched off for every other meeting language.
+
+**What:**
+- English meetings keep the upstream English caption model.
+- German, Auto and every other language the Nemotron model supports use
+  **Nemotron Speech 3.5 streaming** (`nemotron-3.5-asr-streaming320-int8-CoreML`, ~700 MB, the
+  same cache folder as the dictation engine) with a language prompt (`de-DE`, `auto`, …).
+- Nemotron has no end-of-utterance output. `MeetingNemotronLiveRecognizer` ends a caption line
+  when the text has not changed for 0.9 s of audio, or after ~20 s at a sentence end (30 s max).
+- The model is downloaded in the background at app launch, and when the meeting language
+  changes, as long as the saved language is not English. Microphone, app track and prefetch
+  share one download.
+
+**Files:**
+- `Sources/Fluid/Services/Meeting/LiveTranscription/MeetingNemotronLiveRecognizer.swift` (new)
+- `Sources/Fluid/Services/Meeting/MeetingLanguageChoice.swift`: `liveCaptionPrompt(for:)`,
+  `prefetchLiveCaptionModelIfNeeded()`
+- `Sources/Fluid/Services/Meeting/LiveTranscription/MeetingLiveTranscriptionCoordinator.swift`:
+  `start(…, multilingualPrompt:)` creates engines with the Nemotron recognizer
+- `Sources/Fluid/Services/Meeting/MeetingSessionCoordinator.swift`: passes the prompt when live
+  captions start
+- `Sources/Fluid/AppDelegate.swift`: 1 line, prefetch at launch
+
+**Tuning:** `endpointSilenceSeconds` and `maxUtteranceSeconds` in
+`MeetingNemotronLiveRecognizer`.

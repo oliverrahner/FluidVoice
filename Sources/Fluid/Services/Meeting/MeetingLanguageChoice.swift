@@ -56,6 +56,36 @@ nonisolated enum MeetingLanguageChoice {
         guard defaults.languageCode != code else { return }
         defaults.languageCode = code
         SettingsStore.shared.meetingRecordingDefaults = defaults
+        self.prefetchLiveCaptionModelIfNeeded()
+    }
+
+    /// FORK(live-captions-multilingual): the Nemotron streaming prompt for live captions in this
+    /// language ("de" → "de-DE", Auto → "auto"), or nil when the model does not support it.
+    @MainActor
+    static func liveCaptionPrompt(for code: String) -> String? {
+        if self.isAuto(code) { return SettingsStore.NemotronLanguage.auto.rawValue }
+        let route = VoiceEngineLanguageCatalog.routes(forLanguageID: code, availableModels: [.nemotronStreaming]).first
+        guard case let .nemotron(language)? = route?.binding else { return nil }
+        return language.rawValue
+    }
+
+    /// FORK(live-captions-multilingual): download the multilingual caption model in the
+    /// background when meetings may not be English, so the first such meeting has captions
+    /// right away.
+    @MainActor
+    static func prefetchLiveCaptionModelIfNeeded() {
+        #if arch(arm64)
+        guard SettingsStore.shared.fluidMeetEnabled else { return }
+        let choice = self.storedChoice(SettingsStore.shared.meetingRecordingDefaults.languageCode)
+        guard choice != "en", self.liveCaptionPrompt(for: choice) != nil else { return }
+        Task { @MainActor in
+            do {
+                _ = try await MeetingNemotronLiveRecognizer.ensureModelFiles()
+            } catch {
+                DebugLogger.shared.warning("Live caption model prefetch failed: \(error)", source: "MeetingLive")
+            }
+        }
+        #endif
     }
 
     /// Dominant language of a finished transcript, restricted to the languages the meeting model

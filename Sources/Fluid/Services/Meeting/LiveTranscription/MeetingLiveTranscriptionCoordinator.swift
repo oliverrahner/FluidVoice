@@ -83,8 +83,10 @@ final nonisolated class MeetingLiveTranscriptionCoordinator: @unchecked Sendable
         )
     }
 
-    func start(mode: MeetingCaptureMode, languageCode: String = "en") {
-        guard languageCode == "en" else {
+    /// FORK(live-captions-multilingual): `multilingualPrompt` (a Nemotron prompt such as "de-DE"
+    /// or "auto") switches both tracks to the multilingual Nemotron streaming recognizer.
+    func start(mode: MeetingCaptureMode, languageCode: String = "en", multilingualPrompt: String? = nil) {
+        guard languageCode == "en" || multilingualPrompt != nil else {
             self.publish { $0.settingAvailability(.unavailable(reason: "Live captions support English only. Your transcript will be generated after recording.")) }
             return
         }
@@ -100,12 +102,15 @@ final nonisolated class MeetingLiveTranscriptionCoordinator: @unchecked Sendable
         self.diag(
             "[live] starting engines mode=\(mode) physicalMemory=\(ProcessInfo.processInfo.physicalMemory / 1_073_741_824)GB"
         )
-        let microphone = MeetingLiveTrackEngine(kind: .microphone)
+        let makeRecognizer: () -> (any MeetingLiveRecognizer)? = {
+            multilingualPrompt.map { MeetingNemotronLiveRecognizer(prompt: $0) }
+        }
+        let microphone = MeetingLiveTrackEngine(kind: .microphone, recognizer: makeRecognizer())
         self.stateLock.withLock { self.microphoneEngine = microphone }
         self.launch(microphone)
 
         if mode == .onlineCall {
-            let application = MeetingLiveTrackEngine(kind: .applicationAudio)
+            let application = MeetingLiveTrackEngine(kind: .applicationAudio, recognizer: makeRecognizer())
             self.stateLock.withLock { self.applicationEngine = application }
             self.launch(application)
         }

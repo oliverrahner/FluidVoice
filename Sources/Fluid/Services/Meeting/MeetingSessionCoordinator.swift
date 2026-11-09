@@ -463,7 +463,14 @@ final class MeetingSessionCoordinator: ObservableObject {
         self.liveTranscriptionCoordinator = liveTranscriptionCoordinator
         self.liveTranscript = .empty
         self.lastLiveSpeechAt = nil
-        liveTranscriptionCoordinator.start(mode: configuration.mode, languageCode: configuration.languageCode)
+        // FORK(live-captions-multilingual): English keeps the upstream English caption model;
+        // automatic and other supported languages use the multilingual Nemotron recognizer.
+        let liveLanguage = configuration.detectsLanguage == true ? MeetingLanguageChoice.autoCode : configuration.languageCode
+        liveTranscriptionCoordinator.start(
+            mode: configuration.mode,
+            languageCode: configuration.languageCode,
+            multilingualPrompt: liveLanguage == "en" ? nil : MeetingLanguageChoice.liveCaptionPrompt(for: liveLanguage)
+        )
 
         do {
             try await self.store.create(session)

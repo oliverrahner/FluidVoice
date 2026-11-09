@@ -370,6 +370,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDele
             Task { @MainActor in
                 guard SettingsStore.shared.fluidMeetEnabled else { return }
                 _ = AppServices.shared.meetingAutoDetector
+                MeetingLanguageChoice.prefetchLiveCaptionModelIfNeeded() // FORK(live-captions-multilingual)
             }
         }
     }
