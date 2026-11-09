@@ -23,16 +23,27 @@ git push --force-with-lease fork fork-main:main
 
 ## Building and installing locally
 
-The app is signed with the local Apple Development certificate and keeps the upstream bundle ID
-`com.FluidApp.app`, so it uses the same settings and meeting library as the release build.
+The app keeps the upstream bundle ID `com.FluidApp.app`, so it uses the same settings and
+meeting library as the release build.
+
+It is signed like T3 Code: with the self-signed **"T3 Local Signing"** certificate from the login
+keychain (override with `FLUIDVOICE_SIGNING_IDENTITY`). The designated requirement pins that
+certificate's hash, so Microphone, Accessibility and Screen & System Audio grants survive
+rebuilds. They only have to be granted again once after switching from the official build, and
+again if the certificate is replaced (it expires Oct 2027).
 
 ```bash
-scripts/fork-install.sh         # builds Release, backs up /Applications/FluidVoice.app, installs
+scripts/fork-install.sh             # build Release, sign, back up the installed app, install
+scripts/fork-install.sh --no-build  # sign and install the last build
 ```
 
-Permissions are tied to the signing team. The first launch after switching from the official
-build needs Microphone, Accessibility and Screen & System Audio access granted again. Turn off
-automatic updates in FluidVoice, or an upstream update replaces this build.
+Notes:
+- The Xcode build still signs with the Apple Development identity if one exists (ad hoc
+  otherwise). The script then re-signs frameworks, `Contents/Helpers/fv-serve` and the app.
+- Entitlements that need a provisioning profile (`com.apple.application-identifier`, …) are
+  dropped while re-signing, or macOS refuses to launch `fv-serve`.
+- Backups go to `~/Applications/FluidVoice-backups/`.
+- Turn off automatic update checks in FluidVoice, or an upstream release replaces this build.
 
 ---
 
