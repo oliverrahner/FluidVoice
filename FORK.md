@@ -8,15 +8,17 @@ Run `git grep -n "FORK("` to list them all.
 
 ## Branches and updating from upstream
 
-- `main`: the fork's branch, upstream `main` plus one commit per feature.
+- Local `fork-main` (pushed to `main` on this fork): upstream `main` plus the fork commits.
+  Local `main` keeps tracking upstream.
 - Remotes: `origin` = upstream (`altic-dev/FluidVoice`), `fork` = this repo.
 
 To update:
 
 ```bash
+git checkout fork-main
 git fetch origin
 git rebase origin/main          # resolve conflicts with the notes below
-git push --force-with-lease fork main
+git push --force-with-lease fork fork-main:main
 ```
 
 ## Building and installing locally
