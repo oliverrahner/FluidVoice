@@ -15,9 +15,9 @@ actor MeetingNemotronLiveRecognizer: MeetingLiveRecognizer {
     static let folderName = "nemotron-3.5-asr-streaming320-int8-CoreML"
     private static let repositoryOwner = "BarathwajAnandan"
     private static let sampleRate = 16_000.0
-    private static let endpointSilenceSeconds = 0.9
+    private static let endpointSilenceSeconds = 1.5
     private static let pollIntervalSeconds = 0.1
-    private static let maxUtteranceSeconds = 20.0
+    private static let maxUtteranceSeconds = 30.0
     private static let sentenceEndings: Set<Character> = [".", "?", "!", "…"]
 
     private let prompt: String

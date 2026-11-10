@@ -109,7 +109,7 @@ switched off for every other meeting language.
   **Nemotron Speech 3.5 streaming** (`nemotron-3.5-asr-streaming320-int8-CoreML`, ~700 MB, the
   same cache folder as the dictation engine) with a language prompt (`de-DE`, `auto`, …).
 - Nemotron has no end-of-utterance output. `MeetingNemotronLiveRecognizer` ends a caption line
-  when the text has not changed for 0.9 s of audio, or after ~20 s at a sentence end (30 s max).
+  when the text has not changed for 1.5 s of audio, or after ~30 s at a sentence end (45 s max).
 - The model is downloaded in the background at app launch, and when the meeting language
   changes, as long as the saved language is not English. Microphone, app track and prefetch
   share one download.
