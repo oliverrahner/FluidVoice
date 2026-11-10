@@ -271,6 +271,18 @@ struct MeetingRecordingSettingsSheet: View {
                             .fluidDropdownStyle(fillsWidth: true)
                             .accessibilityLabel("Meeting audio source")
                         }
+
+                        // FORK(echo-cancellation)
+                        Divider()
+                        MeetingAdaptiveSetupRow(
+                            title: "Echo-Unterdrückung",
+                            detail: "Turn on when the microphone can hear your speakers, even if the output device looks like a headset. The call audio is then removed from the microphone.",
+                            trailingSwitch: true
+                        ) {
+                            Toggle("Echo-Unterdrückung", isOn: self.$draft.forceEchoCancellation)
+                                .labelsHidden()
+                                .toggleStyle(.switch)
+                        }
                     }
 
                     Divider()

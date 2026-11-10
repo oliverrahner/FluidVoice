@@ -19,6 +19,12 @@ nonisolated enum MeetingAECOutputRouteClassifier {
         guard revisionStayedStable, first == second else { return .ambiguous }
         let route = second
         guard route.deviceExists else { return .ambiguous }
+        // FORK(echo-cancellation): the user says the microphone hears the speakers, whatever the
+        // output device reports (a headset base station feeding active speakers looks like
+        // headphones). Treat every stable route as a speaker so AEC3 runs.
+        if MeetingEchoCancellationSetting.isForced {
+            return debugDisabled ? .ambiguous : .supportedSpeaker
+        }
         // Acoustic closure is a property of the terminal, not its transport. Bluetooth alone is
         // ambiguous (it may be a room speaker), but a positively identified headphone terminal is
         // safe to admit without AEC.

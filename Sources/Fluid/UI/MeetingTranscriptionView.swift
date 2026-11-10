@@ -52,6 +52,7 @@ struct MeetingTranscriptionSetupDraft: Equatable {
     var titleWasEdited = false
     var autoDetectEnabled: Bool
     var browserDetectionEnabled: Bool
+    var forceEchoCancellation = MeetingEchoCancellationSetting.isForced // FORK(echo-cancellation)
 
     init(settings: SettingsStore = .shared) {
         self.init(
@@ -1268,6 +1269,7 @@ struct MeetingTranscriptionView: View {
         self.meetingSettingsInitialSection = section
         self.setupDraft.autoDetectEnabled = SettingsStore.shared.meetingAutoDetectEnabled
         self.setupDraft.browserDetectionEnabled = SettingsStore.shared.meetingAutoDetectBrowserEnabled
+        self.setupDraft.forceEchoCancellation = SettingsStore.shared.meetingForceEchoCancellation // FORK(echo-cancellation)
         // FORK(meeting-language): the language may have changed from the menu bar or record prompt.
         self.setupDraft.languageCode = MeetingLanguageChoice.storedChoice(SettingsStore.shared.meetingRecordingDefaults.languageCode)
         self.setupDraft.applicationSelectionWasEdited = false
@@ -1324,6 +1326,7 @@ struct MeetingTranscriptionView: View {
         let previousRetentionPolicy = settings.meetingAudioRetentionPolicy
         settings.meetingAutoDetectEnabled = self.setupDraft.autoDetectEnabled
         settings.meetingAutoDetectBrowserEnabled = self.setupDraft.browserDetectionEnabled
+        settings.meetingForceEchoCancellation = self.setupDraft.forceEchoCancellation // FORK(echo-cancellation)
         settings.meetingAudioRetentionPolicy = self.draftMeetingAudioRetentionPolicy
         if previousRetentionPolicy != self.draftMeetingAudioRetentionPolicy {
             Task { await self.coordinator.sweepExpiredAudio() }

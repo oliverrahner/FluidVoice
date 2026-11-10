@@ -3022,6 +3022,7 @@ nonisolated enum MeetingRawMicrophoneProtection {
     /// warning; this classification never pretends the audio was filtered or acoustically closed.
     static func classify(_ route: MeetingOutputRouteSnapshot) -> MeetingMicrophoneEchoProtection {
         guard route.deviceExists else { return .unfiltered }
+        if MeetingEchoCancellationSetting.isForced { return .unfiltered } // FORK(echo-cancellation)
         if (route.isBuiltIn && route.isHeadphonesDataSource)
             || route.terminalTypes.contains(kAudioStreamTerminalTypeHeadphones)
         {

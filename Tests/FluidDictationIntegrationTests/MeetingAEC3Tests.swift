@@ -8,6 +8,26 @@ import Foundation
 import XCTest
 
 final class MeetingAEC3Tests: XCTestCase {
+    // FORK(echo-cancellation): a headset base station feeding active speakers reports headphones.
+    func testEchoCancellationSwitchTreatsHeadphoneRoutesAsSpeakers() {
+        let key = MeetingEchoCancellationSetting.defaultsKey
+        let previous = UserDefaults.standard.object(forKey: key)
+        defer { UserDefaults.standard.set(previous, forKey: key) }
+        let headset = MeetingOutputRouteSnapshot(
+            deviceExists: true, isBluetooth: false, isBuiltIn: false, isHeadphonesDataSource: false,
+            terminalTypes: [kAudioStreamTerminalTypeHeadphones]
+        )
+
+        UserDefaults.standard.set(false, forKey: key)
+        XCTAssertEqual(MeetingAECOutputRouteClassifier.classify(first: headset, second: headset, revisionStayedStable: true), .physicallyClosed)
+        XCTAssertEqual(MeetingRawMicrophoneProtection.classify(headset), .acousticallyClosed)
+
+        UserDefaults.standard.set(true, forKey: key)
+        XCTAssertEqual(MeetingAECOutputRouteClassifier.classify(first: headset, second: headset, revisionStayedStable: true), .supportedSpeaker)
+        XCTAssertEqual(MeetingAECOutputRouteClassifier.classify(first: headset, second: headset, revisionStayedStable: false), .ambiguous)
+        XCTAssertEqual(MeetingRawMicrophoneProtection.classify(headset), .unfiltered)
+    }
+
     private let token = MeetingAECStreamToken(generation: 7, identity: 11)
 
     func testFailedAECRecordsAndTranscribesEveryFollowingSampleWithoutRetrying() async throws {

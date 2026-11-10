@@ -187,3 +187,27 @@ and Webex.
 - `Sources/Fluid/UI/MeetingRecordingSettingsSheet.swift`: detection description mentions Gather
 - `Tests/FluidDictationIntegrationTests/MeetingAutoDetectorTests.swift`:
   `testGatherConversationPrompts`, registry lookup
+
+## Feature: Echo cancellation switch (`echo-cancellation`)
+
+**Why:** a headset base station that feeds active speakers (here: SteelSeries "Arctis Pro
+Wireless Game" → Toslink → speakers) reports a headphone terminal. FluidVoice then decides the
+route is acoustically closed and never runs echo cancellation, so the microphone records the call
+a second time ("Ralfs Echo").
+
+**What:**
+- FluidMeet settings → Recording → "Echo-Unterdrückung" (online calls only, saved with the
+  settings sheet). When on, every stable output route counts as a speaker: the WebRTC AEC3 bridge
+  removes the call audio (the captured app track) from the microphone. Without AEC the microphone
+  is marked `unfiltered` instead of `acousticallyClosed`.
+- Stored in UserDefaults `MeetingForceEchoCancellation`, read through
+  `MeetingEchoCancellationSetting.isForced` (thread-safe, used on capture queues).
+
+**Files:**
+- `Sources/Fluid/Services/Meeting/AEC/MeetingEchoCancellationSetting.swift` (new)
+- `Sources/Fluid/Services/Meeting/AEC/MeetingAECOutputRouteClassifier.swift`: forced `.supportedSpeaker`
+- `Sources/Fluid/Services/Meeting/MeetingCaptureEngine.swift`: `MeetingRawMicrophoneProtection` forced `.unfiltered`
+- `Sources/Fluid/Persistence/SettingsStore.swift`: `meetingForceEchoCancellation`
+- `Sources/Fluid/UI/MeetingTranscriptionView.swift`: draft field, load and save
+- `Sources/Fluid/UI/MeetingRecordingSettingsSheet.swift`: the switch
+- `Tests/FluidDictationIntegrationTests/MeetingAEC3Tests.swift`: `testEchoCancellationSwitchTreatsHeadphoneRoutesAsSpeakers`

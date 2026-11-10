@@ -2144,6 +2144,16 @@ final class SettingsStore: ObservableObject {
         }
     }
 
+    /// FORK(echo-cancellation): always run echo cancellation in online calls, even when the output
+    /// device reports headphones. Read off the main actor through `MeetingEchoCancellationSetting`.
+    var meetingForceEchoCancellation: Bool {
+        get { self.defaults.bool(forKey: MeetingEchoCancellationSetting.defaultsKey) }
+        set {
+            objectWillChange.send()
+            self.defaults.set(newValue, forKey: MeetingEchoCancellationSetting.defaultsKey)
+        }
+    }
+
     /// Tier 1 native (Zoom/Teams/Webex) meeting auto-detection (default: ON).
     var meetingAutoDetectEnabled: Bool {
         get {
