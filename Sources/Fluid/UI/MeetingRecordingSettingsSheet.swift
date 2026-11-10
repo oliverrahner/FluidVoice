@@ -419,7 +419,7 @@ struct MeetingRecordingSettingsSheet: View {
                     Divider()
                     MeetingAdaptiveSetupRow(
                         title: "Detect meetings automatically",
-                        detail: "Offer to record Zoom, Teams, and Webex meetings. Recording always starts with you.",
+                        detail: "Offer to record Zoom, Teams, Webex, and Gather meetings. Recording always starts with you.", // FORK(gather)
                         trailingSwitch: true
                     ) {
                         Toggle("Detect meetings automatically", isOn: self.$draft.autoDetectEnabled)

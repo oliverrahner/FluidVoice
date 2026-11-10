@@ -165,3 +165,25 @@ come from the voices themselves.
 - `Sources/Fluid/UI/MeetingRecordingSettingsSheet.swift`: "Known voices" section
 
 **Tuning:** `maximumDistance`, `minimumMargin`, `samplesPerPerson` in `MeetingVoiceMatcher`.
+
+## Feature: Gather meeting detection (`gather`)
+
+**Why:** Gather is used for many calls, but FluidVoice only offered recordings for Zoom, Teams
+and Webex.
+
+**What:**
+- The Gather V2 desktop app (`com.gather.GatherV2`, Electron) is a native meeting app for
+  automatic detection, like Teams: the recording prompt appears when Gather opens the microphone
+  while it is in front. Gather opens the microphone only in a conversation (checked: no input or
+  output while idle in the space), so being in the office alone does not prompt.
+- The episode ends when Gather releases the microphone for 60 s, like Teams.
+- Gather is listed with the call apps at the top of the source pickers.
+- Gather in the browser is not detected: its URLs do not tell an active conversation apart from
+  just being in the space.
+
+**Files:**
+- `Sources/Fluid/Services/Meeting/MeetingAppRegistry.swift`: `nativeBundleIdentifiers`,
+  `pickerCallAppOrder`
+- `Sources/Fluid/UI/MeetingRecordingSettingsSheet.swift`: detection description mentions Gather
+- `Tests/FluidDictationIntegrationTests/MeetingAutoDetectorTests.swift`:
+  `testGatherConversationPrompts`, registry lookup

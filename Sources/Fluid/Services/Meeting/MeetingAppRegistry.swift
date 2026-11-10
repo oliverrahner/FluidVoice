@@ -19,6 +19,9 @@ nonisolated enum MeetingAppRegistry {
         "com.microsoft.teams",
         "com.cisco.webexmeetingsapp",
         "Cisco-Systems.Spark",
+        // FORK(gather): Gather V2 desktop (Electron). It opens the microphone only while you are
+        // in a conversation, so the usual "microphone opens while in front" rule applies.
+        "com.gather.GatherV2",
     ]
 
     /// Bundle identifiers for browsers eligible for Tier 2 URL reading. Google Meet's "app" is a
@@ -89,6 +92,7 @@ nonisolated enum MeetingAppRegistry {
         "com.microsoft.teams",
         "com.cisco.webexmeetingsapp",
         "Cisco-Systems.Spark",
+        "com.gather.GatherV2", // FORK(gather)
     ]
 
     private static let pickerBrowserOrder: [String] = [

@@ -1182,6 +1182,22 @@ final class MeetingAutoDetectorTests: XCTestCase {
         XCTAssertEqual(h.prompts.first?.cta, .record)
     }
 
+    // FORK(gather): Gather is detected like Teams, by its microphone opening while it is in front.
+    func testGatherConversationPrompts() {
+        let h = DetectorHarness()
+        h.detector.handleWorkspaceEvent(
+            .init(kind: .activated, bundleIdentifier: "com.gather.GatherV2", processID: 100),
+            at: h.clock.now()
+        )
+        h.detector.handleWindowSnapshot(
+            [.init(processID: 100, windowID: 902, title: "Gather", layer: 0)],
+            at: h.clock.now()
+        )
+        h.detector.handleMicEdge(.init(isActive: true), at: h.clock.now())
+        XCTAssertEqual(h.prompts.count, 1)
+        XCTAssertEqual(h.prompts.first?.cta, .record)
+    }
+
     // MARK: - Dismissal suppression + rolling counter
 
     func testExplicitDismissSuppressesTheBundleForThirtyMinutes() throws {
@@ -1982,6 +1998,7 @@ final class MeetingAutoDetectorTests: XCTestCase {
 
     func testRegistryTierLookup() {
         XCTAssertEqual(MeetingAppRegistry.tier(forBundleIdentifier: "us.zoom.xos"), .nativeTier1)
+        XCTAssertEqual(MeetingAppRegistry.tier(forBundleIdentifier: "com.gather.GatherV2"), .nativeTier1) // FORK(gather)
         XCTAssertEqual(MeetingAppRegistry.tier(forBundleIdentifier: "com.google.Chrome"), .browserTier2)
         XCTAssertEqual(MeetingAppRegistry.tier(forBundleIdentifier: "com.google.Chrome.app.abcdef"), .browserTier2)
         XCTAssertNil(MeetingAppRegistry.tier(forBundleIdentifier: "com.tinyspeck.slackmacgap"))
