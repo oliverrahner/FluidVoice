@@ -241,6 +241,16 @@ final class MeetingParakeetNemotronBackend: MeetingTranscriptionBackend {
                 do {
                     let diarizer = try await factory.makeDiarizer(epoch: first.work.epoch.id)
                     let segments = try await diarizer.diarize(samples: trackSamples)
+                    // FORK(voice-library): keep short single-speaker excerpts per slot for voice
+                    // fingerprints. Slots continue across a track's epochs, so the first epoch's
+                    // token names the slot for the whole track.
+                    if first.materialized.sampleRate == Double(MeetingSpeakerVoiceSamples.sampleRate) {
+                        result.voiceSamples += MeetingSpeakerVoiceSamples.collect(
+                            epoch: first.work.epoch.id,
+                            samples: trackSamples,
+                            segments: segments
+                        )
+                    }
                     for piece in pieces {
                         let pieceStart = Double(piece.offset) / piece.materialized.sampleRate
                         let pieceEnd = pieceStart + piece.materialized.durationSeconds
@@ -281,6 +291,24 @@ final class MeetingParakeetNemotronBackend: MeetingTranscriptionBackend {
                 }
             }
             return result
+        }
+        try Task.checkCancellation()
+
+        // FORK(voice-library): voice fingerprints run between diarization and ASR, so the
+        // embedding model never overlaps the other two. They are optional: any failure only
+        // means no fingerprints for this attempt.
+        var voiceProfiles: [MeetingSpeakerVoiceProfile] = []
+        if !phaseA.voiceSamples.isEmpty {
+            do {
+                voiceProfiles = try await runtime.speakerVoiceProfiles(samples: phaseA.voiceSamples)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                DebugLogger.shared.warning(
+                    "Voice fingerprints failed: \(error.localizedDescription)",
+                    source: "MeetingVoiceLibrary"
+                )
+            }
         }
         try Task.checkCancellation()
 
@@ -340,7 +368,8 @@ final class MeetingParakeetNemotronBackend: MeetingTranscriptionBackend {
             manifest: manifest,
             epochWork: epochWork,
             phaseA: phaseA,
-            phaseB: phaseB
+            phaseB: phaseB,
+            voiceProfiles: voiceProfiles
         )
     }
 
@@ -392,7 +421,8 @@ final class MeetingParakeetNemotronBackend: MeetingTranscriptionBackend {
         manifest: MeetingAnalysisManifest,
         epochWork: [EpochWork],
         phaseA: MeetingNemotronPhaseResult,
-        phaseB: MeetingParakeetPhaseResult
+        phaseB: MeetingParakeetPhaseResult,
+        voiceProfiles: [MeetingSpeakerVoiceProfile] = []
     ) throws -> MeetingCanonicalResultBundle {
         let outputsByEpoch = Dictionary(
             phaseB.outputs.map { ($0.epochID, $0) },
@@ -432,6 +462,7 @@ final class MeetingParakeetNemotronBackend: MeetingTranscriptionBackend {
                 attemptID: request.attemptID,
                 units: units,
                 speakerActivity: phaseA.activity.filter { failures[$0.token.analysisEpochID] == nil },
+                voiceProfiles: voiceProfiles, // FORK(voice-library)
                 speakerSlotsContinueAcrossEpochs: true
             ),
             coverageReceipts: receipts

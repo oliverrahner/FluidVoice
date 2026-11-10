@@ -787,6 +787,10 @@ nonisolated struct MeetingSessionSpeaker: Codable, Identifiable, Equatable, Send
     /// Set when this speaker was merged into another; the speaker is kept (not removed) so
     /// embedding/cluster provenance survives for M3. Optional keeps older manifests decodable.
     var mergedIntoSpeakerID: SessionSpeakerID? = nil
+    /// FORK(voice-library): voice fingerprints (256-value speaker embeddings) from this meeting,
+    /// used to recognise the person in later meetings. See FORK.md, "Voice library".
+    // swiftlint:disable:next discouraged_optional_collection
+    var voiceEmbeddings: [[Float]]? = nil
 }
 
 nonisolated struct MeetingTranscriptSegment: Codable, Identifiable, Equatable, Sendable {

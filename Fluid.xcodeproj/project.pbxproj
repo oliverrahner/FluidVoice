@@ -69,6 +69,7 @@
 		FEA4AB111222333444555502 /* MeetingSpeakerVoiceMatcherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEA4AB111222333444555501 /* MeetingSpeakerVoiceMatcherTests.swift */; };
 		D9B100000000000000000002 /* VoiceModelDeletionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9B100000000000000000001 /* VoiceModelDeletionTests.swift */; };
 		C2B100000000000000000002 /* MeetingTranscriptAssemblerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B100000000000000000001 /* MeetingTranscriptAssemblerTests.swift */; };
+		F0A7C0DE0000000000000002 /* MeetingVoiceLibraryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0A7C0DE0000000000000001 /* MeetingVoiceLibraryTests.swift */; };
 		C2B200000000000000000002 /* MeetingCanonicalPipelineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2B200000000000000000001 /* MeetingCanonicalPipelineTests.swift */; };
 		E3A000000000000000000002 /* MeetingParakeetNemotronBackendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A000000000000000000001 /* MeetingParakeetNemotronBackendTests.swift */; };
 		E3A000000000000000000012 /* MeetingTextOverlapEchoVerdictProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3A000000000000000000011 /* MeetingTextOverlapEchoVerdictProviderTests.swift */; };
@@ -253,6 +254,7 @@
 		FEA4AB111222333444555501 /* MeetingSpeakerVoiceMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingSpeakerVoiceMatcherTests.swift; sourceTree = "<group>"; };
 		D9B100000000000000000001 /* VoiceModelDeletionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceModelDeletionTests.swift; sourceTree = "<group>"; };
 		C2B100000000000000000001 /* MeetingTranscriptAssemblerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingTranscriptAssemblerTests.swift; sourceTree = "<group>"; };
+		F0A7C0DE0000000000000001 /* MeetingVoiceLibraryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingVoiceLibraryTests.swift; sourceTree = "<group>"; };
 		C2B200000000000000000001 /* MeetingCanonicalPipelineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingCanonicalPipelineTests.swift; sourceTree = "<group>"; };
 		E3A000000000000000000001 /* MeetingParakeetNemotronBackendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingParakeetNemotronBackendTests.swift; sourceTree = "<group>"; };
 		E3A000000000000000000011 /* MeetingTextOverlapEchoVerdictProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeetingTextOverlapEchoVerdictProviderTests.swift; sourceTree = "<group>"; };
@@ -525,6 +527,7 @@
 				B1016A0000000000000000A1 /* LLMClientIdleConnectionTests.swift */,
 				F1E2026102900000000000001 /* FileExportTests.swift */,
 				C2B100000000000000000001 /* MeetingTranscriptAssemblerTests.swift */,
+				F0A7C0DE0000000000000001 /* MeetingVoiceLibraryTests.swift */,
 				D9B100000000000000000001 /* VoiceModelDeletionTests.swift */,
 				C2B200000000000000000001 /* MeetingCanonicalPipelineTests.swift */,
 				E3A000000000000000000001 /* MeetingParakeetNemotronBackendTests.swift */,
@@ -938,6 +941,7 @@
 				B1016A0000000000000000A2 /* LLMClientIdleConnectionTests.swift in Sources */,
 				F1E2026102900000000000002 /* FileExportTests.swift in Sources */,
 				C2B100000000000000000002 /* MeetingTranscriptAssemblerTests.swift in Sources */,
+				F0A7C0DE0000000000000002 /* MeetingVoiceLibraryTests.swift in Sources */,
 				D9B100000000000000000002 /* VoiceModelDeletionTests.swift in Sources */,
 				C2B200000000000000000002 /* MeetingCanonicalPipelineTests.swift in Sources */,
 				E3A000000000000000000002 /* MeetingParakeetNemotronBackendTests.swift in Sources */,

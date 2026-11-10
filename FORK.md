@@ -126,3 +126,42 @@ switched off for every other meeting language.
 
 **Tuning:** `endpointSilenceSeconds` and `maxUtteranceSeconds` in
 `MeetingNemotronLiveRecognizer`.
+
+## Feature: Voice library (`voice-library`)
+
+**Why:** most meetings are with the same ~20 people, and every meeting starts again at
+"Speaker 1, Speaker 2". Teams and Slack offer no usable source for who is speaking, so the names
+come from the voices themselves.
+
+**What:**
+- After diarization, the Parakeet + Nemotron backend computes two voice fingerprints per speaker
+  (256-value WeSpeaker embeddings, from two clean 3–5 s single-speaker excerpts). Upstream had this
+  code (`speakerVoiceProfiles`, `MeetingSpeakerVoiceSamples`) but never called it. They are stored
+  on `MeetingSessionSpeaker.voiceEmbeddings`.
+- Naming a speaker in a meeting (rename, Assign speakers, merge into a named speaker, undo)
+  stores that speaker's fingerprints under the name in
+  `~/Library/Application Support/FluidVoice/VoiceLibrary.json`. Renaming moves them; renaming
+  back to a placeholder removes them. Up to 30 fingerprints per person.
+- After processing a meeting, every placeholder speaker ("Speaker N") whose fingerprints are
+  within cosine distance 0.45 of one person, at least 0.10 closer than the next person, gets that
+  name. One person names at most one speaker per meeting. The match is recorded as an identity
+  candidate with source `voiceLibrary`. Distances are logged (source `MeetingVoiceLibrary`).
+- FluidMeet settings → "Known voices" lists the people and forgets one or all.
+- Only meetings processed by this build have fingerprints. "Transcribe again" on an older
+  meeting computes them (and resets its speaker names).
+
+**Files:**
+- `Sources/Fluid/Services/Meeting/MeetingVoiceLibrary.swift` (new): store, matcher, learning
+- `Sources/Fluid/UI/MeetingVoiceLibrarySettings.swift` (new): settings list
+- `Tests/FluidDictationIntegrationTests/MeetingVoiceLibraryTests.swift` (new; registered by hand in
+  `Fluid.xcodeproj/project.pbxproj`, IDs `F0A7C0DE…01/02`, because test files are not synchronized)
+- `Sources/Fluid/Services/Meeting/MeetingModels.swift`: `voiceEmbeddings` on `MeetingSessionSpeaker`
+- `Sources/Fluid/Services/Meeting/Backend/MeetingParakeetNemotronBackend.swift`: collect excerpts
+  in phase A, compute fingerprints between phase A and B, pass them in the evidence
+- `Sources/Fluid/Services/Meeting/Backend/MeetingTranscriptAssembler.swift`: `makeSpeakers`
+  attaches fingerprints (by track + slot label when slots continue across epochs)
+- `Sources/Fluid/Services/Meeting/MeetingSessionCoordinator.swift`: name speakers after
+  processing; learn after `performCorrection` and undo
+- `Sources/Fluid/UI/MeetingRecordingSettingsSheet.swift`: "Known voices" section
+
+**Tuning:** `maximumDistance`, `minimumMargin`, `samplesPerPerson` in `MeetingVoiceMatcher`.

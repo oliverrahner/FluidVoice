@@ -415,7 +415,9 @@ nonisolated struct MeetingTranscriptAssembler {
             attemptID: manifest.attemptID,
             manifest: manifest,
             emitted: visibleUnits,
-            identityLinks: identityLinks
+            identityLinks: identityLinks,
+            voiceProfiles: evidence.voiceProfiles, // FORK(voice-library)
+            slotsContinueAcrossEpochs: evidence.speakerSlotsContinueAcrossEpochs
         )
         let speakerIDsByToken = Dictionary(
             speakers.map { ($0.token, $0.speaker.id) },
@@ -710,8 +712,21 @@ nonisolated struct MeetingTranscriptAssembler {
         attemptID: UUID,
         manifest: MeetingAnalysisManifest,
         emitted: [(unit: MeetingFinalTextUnit, presentation: MeetingAnalysisInterval)],
-        identityLinks: [MeetingSpeakerIdentityLink]
+        identityLinks: [MeetingSpeakerIdentityLink],
+        voiceProfiles: [MeetingSpeakerVoiceProfile] = [],
+        slotsContinueAcrossEpochs: Bool = false
     ) -> [(token: MeetingBackendSpeakerToken, speaker: MeetingSessionSpeaker)] {
+        // FORK(voice-library): a voice profile belongs to a speaker by its exact token, or, when
+        // slots continue across a track's epochs, by track and slot label.
+        let profileKey = { (token: MeetingBackendSpeakerToken) -> String in
+            slotsContinueAcrossEpochs
+                ? "\(token.analysisEpochID.trackID.uuidString)|\(token.label)"
+                : "\(token.analysisEpochID)|\(token.label)"
+        }
+        let embeddingsByKey = Dictionary(
+            voiceProfiles.map { (profileKey($0.token), $0.embeddings) },
+            uniquingKeysWith: { first, _ in first }
+        )
         var tokens: [MeetingBackendSpeakerToken] = []
         var seen = Set<MeetingBackendSpeakerToken>()
         for (unit, _) in emitted {
@@ -759,7 +774,8 @@ nonisolated struct MeetingTranscriptAssembler {
                     diarizationClusterID: scopedClusterID,
                     trackKind: manifest.track(token.analysisEpochID.trackID)?.kind ?? .microphone,
                     isLocalUser: false,
-                    identityCandidates: []
+                    identityCandidates: [],
+                    voiceEmbeddings: embeddingsByKey[profileKey(canonical)]
                 )
             )
         }

@@ -949,6 +949,7 @@ final class MeetingSessionCoordinator: ObservableObject {
         let inverse = try mutate(&target)
         guard target != before else { return target }
         try await self.store.save(target)
+        MeetingVoiceLibrary.shared.learn(from: before, to: target) // FORK(voice-library)
 
         var stack = self.correctionUndoStacks[sessionID] ?? []
         stack.append(inverse)
@@ -1118,6 +1119,7 @@ final class MeetingSessionCoordinator: ObservableObject {
 
         try self.assertSafeToMutate(sessionID: sessionID)
 
+        let beforeUndo = target // FORK(voice-library)
         guard Self.applyInverse(correction, to: &target) else {
             // Inverse target no longer exists: drop the stale entry, never save a no-op.
             self.correctionUndoStacks[sessionID] = stack
@@ -1134,6 +1136,7 @@ final class MeetingSessionCoordinator: ObservableObject {
             throw error
         }
         self.correctionUndoStacks[sessionID] = stack
+        MeetingVoiceLibrary.shared.learn(from: beforeUndo, to: target) // FORK(voice-library)
 
         self.refreshSlots(with: target)
         return target
@@ -1766,7 +1769,8 @@ final class MeetingSessionCoordinator: ObservableObject {
             var completedAttempt = result.attempt
             if requestedLanguageCode != nil { completedAttempt.languageCode = processingSession.languageCode }
             completedAttempt.retainedTranscriptLanguageCode = nil
-            session.speakers = result.speakers
+            // FORK(voice-library): speakers whose voice matches a known person get that name.
+            session.speakers = MeetingVoiceLibrary.shared.applyKnownNames(to: result.speakers)
             session.transcriptSegments = result.segments
             // FORK(meeting-language): an explicit language choice ends detection; otherwise an
             // automatic session takes the dominant language of its transcript.

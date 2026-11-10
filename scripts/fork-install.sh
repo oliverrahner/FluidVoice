@@ -87,11 +87,16 @@ codesign --verify --deep --strict "${APP_PATH}"
 codesign -d -r- "${APP_PATH}" 2>&1 | grep designated
 
 echo "Quitting FluidVoice..."
-osascript -e 'tell application id "com.FluidApp.app" to quit' >/dev/null 2>&1 || true
-for _ in $(seq 1 20); do
+# The first quit request is sometimes ignored, so it is repeated every 2 seconds.
+for _ in $(seq 1 10); do
     pgrep -x FluidVoice >/dev/null || break
-    sleep 0.5
+    osascript -e 'tell application id "com.FluidApp.app" to quit' >/dev/null 2>&1 || true
+    sleep 2
 done
+if pgrep -x FluidVoice >/dev/null; then
+    echo "FluidVoice did not quit (recording or processing?). Quit it, then run: $0 --no-build" >&2
+    exit 1
+fi
 
 if [ -d "${INSTALL_PATH}" ]; then
     mkdir -p "${BACKUP_DIR}"

@@ -5,6 +5,7 @@ enum MeetingSettingsSection: String, CaseIterable, Identifiable {
     case recording = "Recording"
     case automation = "Automation & storage"
     case integrations = "Integrations"
+    case voices = "Known voices" // FORK(voice-library)
 
     var id: String { self.rawValue }
 
@@ -13,6 +14,7 @@ enum MeetingSettingsSection: String, CaseIterable, Identifiable {
         case .recording: "waveform"
         case .automation: "slider.horizontal.3"
         case .integrations: "link"
+        case .voices: "person.wave.2"
         }
     }
 
@@ -21,6 +23,7 @@ enum MeetingSettingsSection: String, CaseIterable, Identifiable {
         case .recording: "Choose your audio sources and transcript language."
         case .automation: "Choose when to see a recording prompt and how long to keep audio."
         case .integrations: "Connect your meeting notes to the AI assistants you already use."
+        case .voices: "People FluidVoice recognises by voice. Name a speaker in a meeting to add or teach a voice."
         }
     }
 }
@@ -93,7 +96,7 @@ struct MeetingRecordingSettingsSheet: View {
     /// on another tab still unsaved it would discard them, and has to say so.
     static func dismissTitle(isFirstSetup: Bool, section: MeetingSettingsSection, hasUnsavedChanges: Bool) -> String {
         if isFirstSetup { return "Not now" }
-        return section == .integrations && !hasUnsavedChanges ? "Close" : "Cancel"
+        return (section == .integrations || section == .voices) && !hasUnsavedChanges ? "Close" : "Cancel"
     }
 
     private var canSave: Bool {
@@ -135,6 +138,8 @@ struct MeetingRecordingSettingsSheet: View {
                             self.automationSettings
                         case .integrations:
                             self.integrationSettings
+                        case .voices:
+                            MeetingVoiceLibrarySettings()
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
